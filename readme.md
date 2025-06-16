@@ -1,4 +1,4 @@
-# 数羊 Counting Sheeps
+# 数羊 Counting Sheep
 
 一个旨在帮助失眠者入睡的互动式数羊小工具。
 
@@ -13,7 +13,7 @@
 ## 如何使用
 
 1.  **克隆或下载**：将项目文件克隆或下载到您的本地计算机，可直接点击index.html运行。
-2.  **在线服务**：[数羊 Counting Sheeps](https://sheep.lto.asia/)
+2.  **在线服务**：[数羊 Counting Sheep](https://sheep.lto.asia/)
 
 ## 版权信息
 
