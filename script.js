@@ -194,8 +194,12 @@ function performAutoClick() {
     // 注意：此函数现在只负责执行点击，不再检查 isTimerRunning 或 isTimerPaused
     // 这些检查应该在调用 performAutoClick 的地方（如 startTimer 和 resumeTimer）进行
 
-    const settingsModalRect = settingsModal.getBoundingClientRect();
-    const settingsBtnRect = document.getElementById('settingsBtn').getBoundingClientRect();
+    const settingsModalElement = document.getElementById('settingsModal');
+    const settingsButtonElement = document.getElementById('settingsBtn');
+
+    // 确保元素存在才获取其边界，避免在DOM未完全加载时出错
+    const settingsModalRect = settingsModalElement ? settingsModalElement.getBoundingClientRect() : null;
+    const settingsBtnRect = settingsButtonElement ? settingsButtonElement.getBoundingClientRect() : null;
 
     let randomX, randomY;
     let attempts = 0;
@@ -217,22 +221,36 @@ function performAutoClick() {
         if (!targetElement) { 
             continue; 
         }
+        
+        let isClickInsideSettings = false;
+        // 检查是否点击在设置模态框内部 (仅当模态框可见时)
+        if (settingsModalElement && settingsModalElement.classList.contains('show') && settingsModalRect) {
+            if (settingsModalElement.contains(targetElement) || targetElement === settingsModalElement) {
+                 isClickInsideSettings = true;
+            }
+        }
+        // 检查是否点击在设置按钮上
+        if (!isClickInsideSettings && settingsButtonElement && settingsBtnRect) {
+            if (settingsButtonElement.contains(targetElement) || targetElement === settingsButtonElement) {
+                isClickInsideSettings = true;
+            }
+        }
 
-        const isTargetInsideModalOrIsModalItself = settingsModal.classList.contains('show') && 
-                                                 (settingsModal.contains(targetElement) || targetElement === settingsModal);
-        const isTargetTheSettingsBtn = targetElement === settingsBtn || settingsBtn.contains(targetElement);
-
-        if (isTargetInsideModalOrIsModalItself || isTargetTheSettingsBtn) {
-            targetElement = null; 
+        if (isClickInsideSettings) {
+            targetElement = null; // 标记为无效，继续尝试
             continue;
         }
         
-        break; 
+        break; // 找到了有效的目标
 
     } while (true); 
 
     if (!targetElement) {
-        console.warn("performAutoClick could not secure a valid targetElement after loop.");
+        // console.warn("performAutoClick could not secure a valid targetElement after loop.");
+        // 即使找不到特定元素，也尝试在随机位置创建效果，除非该位置明确在设置区域内
+        // 这一段逻辑在上面的do-while循环中已经处理了，如果能跳出循环，说明targetElement是有效的
+        // 如果因为maxAttempts退出，则上面已经return了。所以这里理论上targetElement不会是null
+        // 但为保险起见，如果真的为null，则直接返回
         return;
     }
     
@@ -270,11 +288,13 @@ function startTimer() {
     }, 1000);
 
     // 每3秒自动点击一次
-    if (autoClickInterval) clearInterval(autoClickInterval);
+    if (autoClickInterval) clearInterval(autoClickInterval); // 清除旧的interval以防重复
     
     // 无论是否暂停恢复，只要计时器启动/恢复，就应该开始自动点击
-    performAutoClick(); // 立即执行一次
-    autoClickInterval = setInterval(performAutoClick, 3000);
+    if (isTimerRunning && !isTimerPaused) { // 确保只在计时器确实在运行时执行
+        performAutoClick(); // 立即执行一次
+        autoClickInterval = setInterval(performAutoClick, 3000);
+    }
 }
 
 
@@ -315,6 +335,7 @@ function pauseTimer() {
 function resumeTimer() {
     if (!isTimerRunning || !isTimerPaused) return;
     isTimerPaused = false; // 清除暂停状态
+    
     // 重新启动计时器逻辑，但不重置 remainingTime
     timerInterval = setInterval(() => {
         remainingTime--;
@@ -325,9 +346,11 @@ function resumeTimer() {
     }, 1000);
 
     // 恢复自动点击
-    if (autoClickInterval) clearInterval(autoClickInterval);
-    performAutoClick(); // 立即执行一次
-    autoClickInterval = setInterval(performAutoClick, 3000);
+    if (autoClickInterval) clearInterval(autoClickInterval); // 清除旧的interval以防重复
+    if (isTimerRunning && !isTimerPaused) { // 确保只在计时器确实在运行时执行
+        performAutoClick(); // 立即执行一次
+        autoClickInterval = setInterval(performAutoClick, 3000);
+    }
 }
 
 // 开始/停止按钮事件
