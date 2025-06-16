@@ -83,10 +83,30 @@ function resetCounter() {
 let currentVolume = 50;
 let isMuted = false;
 
-// 页面加载时初始化音量图标
+// 页面加载时初始化音量图标和加载本地存储的音量
 document.addEventListener('DOMContentLoaded', () => {
+  loadVolumeFromLocalStorage();
   updateVolumeIcon();
 });
+
+// 从 localStorage 加载音量
+function loadVolumeFromLocalStorage() {
+  const savedVolume = localStorage.getItem('sheepCounterVolume');
+  if (savedVolume !== null) {
+    currentVolume = parseInt(savedVolume);
+    document.getElementById('volumeSlider').value = currentVolume;
+    document.getElementById('volumeValue').textContent = currentVolume;
+    // 如果加载的音量是0，则认为是静音状态
+    if (currentVolume === 0) {
+        isMuted = true;
+    }
+  }
+}
+
+// 保存音量到 localStorage
+function saveVolumeToLocalStorage() {
+  localStorage.setItem('sheepCounterVolume', currentVolume);
+}
 
 // 获取新的模态窗口元素
 const settingsModal = document.getElementById('settingsModal');
@@ -132,7 +152,9 @@ settingsModal.addEventListener('click', (e) => {
 document.getElementById('volumeSlider').addEventListener('input', (e) => {
   currentVolume = parseInt(e.target.value);
   document.getElementById('volumeValue').textContent = currentVolume;
+  isMuted = (currentVolume === 0); // 如果滑到0，则视为静音
   updateVolumeIcon();
+  saveVolumeToLocalStorage();
 });
 
 // 定时器状态变量
@@ -167,14 +189,21 @@ timerDurationInput.addEventListener('input', () => {
 document.getElementById('volumeIcon').addEventListener('click', () => {
   isMuted = !isMuted;
   if (isMuted) {
+    // 如果当前音量不是0，静音时将其保存，以便取消静音时恢复
+    if (currentVolume > 0) {
+        localStorage.setItem('volumeBeforeMute', currentVolume); // 可以考虑保存静音前的音量
+    }
     currentVolume = 0;
   } else {
-    // 点击恢复时，音量设置为50
-    currentVolume = 50;
+    // 点击恢复时，尝试恢复到静音前的音量，如果不存在则默认为50
+    const volumeBeforeMute = localStorage.getItem('volumeBeforeMute');
+    currentVolume = volumeBeforeMute ? parseInt(volumeBeforeMute) : 50;
+    if(currentVolume === 0) currentVolume = 50; // 防止静音前音量也是0的情况
   }
   document.getElementById('volumeSlider').value = currentVolume;
   document.getElementById('volumeValue').textContent = currentVolume;
   updateVolumeIcon();
+  saveVolumeToLocalStorage();
 });
 
 // 更新音量图标函数

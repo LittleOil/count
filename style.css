@@ -254,3 +254,13 @@ h1 {
   cursor: pointer;
   font-size: 1.2em;
 }
+
+/* 版权声明文字样式 */
+.copyright-text {
+  font-size: 0.8em;
+  color: #aaa;
+  text-align: center;
+  margin-top: 20px; /* 与上方元素的间距 */
+  padding-top: 10px; /* 增加一点内边距 */
+  border-top: 1px solid rgba(255, 255, 255, 0.1); /* 分隔线 */
+}
